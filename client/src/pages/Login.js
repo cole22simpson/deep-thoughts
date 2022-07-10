@@ -1,63 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
+import ThoughtList from '../components/ThoughtList';
+import ThoughtForm from '../components/ThoughtForm';
+import FriendList from '../components/FriendList';
 
-const Login = props => {
-  const [formState, setFormState] = useState({ email: '', password: '' });
+import Auth from '../utils/auth';
+import { useQuery } from '@apollo/client';
+import { QUERY_THOUGHTS, QUERY_ME_BASIC } from '../utils/queries';
 
-  // update state based on form input changes
-  const handleChange = event => {
-    const { name, value } = event.target;
+const Home = () => {
+  const { loading, data } = useQuery(QUERY_THOUGHTS);
+  const { data: userData } = useQuery(QUERY_ME_BASIC);
+  const thoughts = data?.thoughts || [];
 
-    setFormState({
-      ...formState,
-      [name]: value
-    });
-  };
-
-  // submit form
-  const handleFormSubmit = async event => {
-    event.preventDefault();
-
-    // clear form values
-    setFormState({
-      email: '',
-      password: ''
-    });
-  };
+  const loggedIn = Auth.loggedIn();
 
   return (
-    <main className="flex-row justify-center mb-4">
-      <div className="col-12 col-md-6">
-        <div className="card">
-          <h4 className="card-header">Login</h4>
-          <div className="card-body">
-            <form onSubmit={handleFormSubmit}>
-              <input
-                className="form-input"
-                placeholder="Your email"
-                name="email"
-                type="email"
-                id="email"
-                value={formState.email}
-                onChange={handleChange}
-              />
-              <input
-                className="form-input"
-                placeholder="******"
-                name="password"
-                type="password"
-                id="password"
-                value={formState.password}
-                onChange={handleChange}
-              />
-              <button className="btn d-block w-100" type="submit">
-                Submit
-              </button>
-            </form>
+    <main>
+      <div className="flex-row justify-space-between">
+        {loggedIn && (
+          <div className="col-12 mb-3">
+            <ThoughtForm />
           </div>
+        )}
+        <div className={`col-12 mb-3 ${loggedIn && 'col-lg-8'}`}>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <ThoughtList
+              thoughts={thoughts}
+              title="Some Feed for Thought(s)..."
+            />
+          )}
         </div>
+        {loggedIn && userData ? (
+          <div className="col-12 col-lg-3 mb-3">
+            <FriendList
+              username={userData.me.username}
+              friendCount={userData.me.friendCount}
+              friends={userData.me.friends}
+            />
+          </div>
+        ) : null}
       </div>
     </main>
   );
 };
 
-export default Login;
+export default Home;
